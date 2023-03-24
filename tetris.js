@@ -1,7 +1,13 @@
+/**
+ * @description Tetris 객체
+ * @param number imageX 
+ * @param number imageY
+ * @param array template
+ */
 class Tetris {
   constructor(imageX, imageY, template) {
-    this.imageY = imageY;
     this.imageX = imageX;
+    this.imageY = imageY;
     this.template = template;
   }
 
@@ -20,15 +26,20 @@ class Tetris {
   changeRotation() {}
 }
 
-const imageSquereSize = 24;
-const size = 40;
+const imageSquareSize = 24; // 1개 사각형 사이즈
+const size = 40; // X or y축에서 1개의 사각형 + 여백(전체 크기)
 const framePerSecond = 24;
+const gameSpeed = 5;
 const canvas = document.getElementById("canvas");
 const Image = document.getElementById("image");
 const ctx = canvas.getContext("2d");
-const squareCountX = canvas.width / size; //X축 사각형 cnt
-const squareCountY = canvas.height / size; //Y축 사각형 cnt
+const squareCountX = canvas.width / size; // X축 사각형 갯수
+const squareCountY = canvas.height / size; //Y축 사각형 갯수
 
+/**
+ * 테트리스 shapes
+ * @returns Tetris
+ */
 const shapes = [
   new Tetris(0, 120, [
     [0, 1, 0],
@@ -46,8 +57,8 @@ const shapes = [
     [0, 1, 1],
   ]),
   new Tetris(0, 48, [
-    [0, 1, 0],
-    [0, 1, 0],
+    [0, 0, 0],
+    [0, 1, 1],
     [1, 1, 0],
   ]),
   new Tetris(0, 24, [
@@ -73,6 +84,7 @@ let currentShape;
 let nextShape;
 let score;
 let initialTwoDArr;
+let whiteLineThickness = 4;
 
 let gameLoop = () => {
   setInterval(update, 1000 / gameSpeed);
@@ -81,8 +93,66 @@ let gameLoop = () => {
 
 let update = () => {};
 
-let draw = () => {};
+/** 개별 사각형 그려주는 함수
+ *  x, y : 좌표
+ *  width, height: 크기
+ *  color: 채우는 배경
+ **/
+let drawRect = (x, y, width, height, color) => {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+};
 
+/**
+ * 흰색 경계 테두리 그려주는 함수
+ */
+let drawBackground = () => {
+  drawRect(0, 0, canvas.width, canvas.height, "#bca0dc");
+  for (let i = 0; i < squareCountX + 1; i++) {
+    drawRect(
+      size * i - whiteLineThickness,
+      0,
+      whiteLineThickness,
+      canvas.height,
+      "white"
+    );
+  }
+  for (let i = 0; i < squareCountY + 1; i++) {
+    drawRect(
+      0,
+      size * i - whiteLineThickness,
+      canvas.width,
+      whiteLineThickness,
+      "white"
+    );
+  }
+};
+/**
+ * 현재 테트리스 그려주는 함수
+ *
+ */
+let drawCurrentTetris = () => {
+  for (let i = 0; i < currentShape.template.length; i++) {
+    for (let j = 0; j < currentShape.template.length; j++) {
+      // if()
+    }
+  }
+};
+
+let draw = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  // drawSquare();
+  drawCurrentTetris();
+  drawNextShape();
+  if (gameOver) {
+    drawGameOver();
+  }
+};
+/**
+ * 테트리스 랜덤 모양 나오게 하는 함수
+ * @returns Object {}
+ */
 let getRandomShape = () => {
   return Object.create(
     shapes[Math.floor(Math.random() * shapes.length)]
@@ -101,6 +171,7 @@ let resetVars = () => {
   gameOver = 0;
   currentShape = getRandomShape();
   nextShape = getRandomShape();
+  gameMap = initialTwoDArr;
 };
 
 gameLoop();
