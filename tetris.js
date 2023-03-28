@@ -1,14 +1,16 @@
 /**
  * @description Tetris 객체
- * @param number imageX 
+ * @param number imageX
  * @param number imageY
  * @param array template
  */
 class Tetris {
   constructor(imageX, imageY, template) {
-    this.imageX = imageX;
     this.imageY = imageY;
+    this.imageX = imageX;
     this.template = template;
+    this.x = squareCountX / 2;
+    this.y = 0;
   }
 
   checkBottom() {}
@@ -71,6 +73,7 @@ const shapes = [
     [1, 1],
     [1, 1],
   ]),
+
   new Tetris(0, 48, [
     [0, 0, 0],
     [1, 1, 0],
@@ -89,9 +92,15 @@ let whiteLineThickness = 4;
 let gameLoop = () => {
   setInterval(update, 1000 / gameSpeed);
   setInterval(draw, 1000 / framePerSecond);
+  // setInterval(console.log('test'), 1000 / framePerSecond);
 };
 
-let update = () => {};
+let update = () => {
+  if (gameOver) return;
+  if (currentShape.checkBottom()) {
+    currentShape.y += 1;
+  }
+};
 
 /** 개별 사각형 그려주는 함수
  *  x, y : 좌표
@@ -117,6 +126,7 @@ let drawBackground = () => {
       "white"
     );
   }
+
   for (let i = 0; i < squareCountY + 1; i++) {
     drawRect(
       0,
@@ -127,6 +137,7 @@ let drawBackground = () => {
     );
   }
 };
+
 /**
  * 현재 테트리스 그려주는 함수
  *
@@ -134,15 +145,30 @@ let drawBackground = () => {
 let drawCurrentTetris = () => {
   for (let i = 0; i < currentShape.template.length; i++) {
     for (let j = 0; j < currentShape.template.length; j++) {
-      // if()
+      if (currentShape.template[i][j] === 0) continue;
+      ctx.drawImage(
+        image,
+        currentShape.imageX,
+        currentShape.imageY,
+        imageSquareSize,
+        imageSquareSize,
+        Math.trunc(currentShape.x) * size + size * i,
+        Math.trunc(currentShape.x) * size + size * j,
+        size,
+        size
+      );
     }
   }
 };
 
+let drawSquares = () => {};
+
+let drawNextShape = () => {};
+
 let draw = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
-  // drawSquare();
+  drawSquares();
   drawCurrentTetris();
   drawNextShape();
   if (gameOver) {
@@ -162,16 +188,19 @@ let resetVars = () => {
   initialTwoDArr = [];
   for (let i = 0; i < squareCountY; i++) {
     let temp = [];
-    for (let j = 0; i < squareCountX; j++) {
+    for (let j = 0; j < squareCountX; j++) {
       temp.push({ imageX: -1, imageY: -1 });
     }
     initialTwoDArr.push(temp);
   }
   score = 0;
-  gameOver = 0;
+  gameOver = false;
   currentShape = getRandomShape();
+  console.log(`현재 모양 ${JSON.stringify(currentShape)}`);
   nextShape = getRandomShape();
+  console.log(`다음 모양 ${JSON.stringify(nextShape)}`);
   gameMap = initialTwoDArr;
 };
 
+resetVars();
 gameLoop();
