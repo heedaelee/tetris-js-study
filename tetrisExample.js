@@ -1,17 +1,4 @@
-/**
- * @description Tetris 객체
- * @param number imageX
- * @param number imageY
- * @param array template
- */
 class Tetris {
-  /**
-   * @param {number} imageX 컬러블락, 클리핑 할 png 파일의 x좌표
-   * @param {number} imageY 컬러블락, 클리핑 할 png 파일의 y좌표
-   * @param {number[]} template 테트리스 블락 형태
-   * x : 캔버스 중 x축 위치
-   * y : 캔버스 중 y축 위치
-   */
   constructor(imageX, imageY, template) {
     this.imageY = imageY;
     this.imageX = imageX;
@@ -23,13 +10,13 @@ class Tetris {
   checkBottom() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
-        if (this.template[i][j] === 0) continue;
+        if (this.template[i][j] == 0) continue;
         let realX = i + this.getTruncedPosition().x;
         let realY = j + this.getTruncedPosition().y;
         if (realY + 1 >= squareCountY) {
           return false;
         }
-        if (gameMap[realY + 1][realX].imageX !== -1) {
+        if (gameMap[realY + 1][realX].imageX != -1) {
           return false;
         }
       }
@@ -40,31 +27,33 @@ class Tetris {
   getTruncedPosition() {
     return { x: Math.trunc(this.x), y: Math.trunc(this.y) };
   }
-
   checkLeft() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
-        if (this.template[i][j] === 0) continue;
+        if (this.template[i][j] == 0) continue;
         let realX = i + this.getTruncedPosition().x;
         let realY = j + this.getTruncedPosition().y;
         if (realX - 1 < 0) {
           return false;
         }
-        if (gameMap[realY][realX - 1].imageX !== -1) return false;
+
+        if (gameMap[realY][realX - 1].imageX != -1) return false;
       }
     }
     return true;
   }
+
   checkRight() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
-        if (this.template[i][j] === 0) continue;
+        if (this.template[i][j] == 0) continue;
         let realX = i + this.getTruncedPosition().x;
         let realY = j + this.getTruncedPosition().y;
         if (realX + 1 >= squareCountX) {
           return false;
         }
-        if (gameMap[realY][realX + 1].imageX !== -1) return false;
+
+        if (gameMap[realY][realX + 1].imageX != -1) return false;
       }
     }
     return true;
@@ -85,42 +74,39 @@ class Tetris {
   moveBottom() {
     if (this.checkBottom()) {
       this.y += 1;
+      score += 1;
     }
   }
-  /**
-   * 테트리스 블록 회전 : UP 키
-   */
   changeRotation() {
     let tempTemplate = [];
-    // this.template : 블록 모양 배열
     for (let i = 0; i < this.template.length; i++)
       tempTemplate[i] = this.template[i].slice();
-    let n = this.template.length; //블록 모양 row 갯수
-
+    let n = this.template.length;
     for (let layer = 0; layer < n / 2; layer++) {
       let first = layer;
       let last = n - 1 - layer;
       for (let i = first; i < last; i++) {
         let offset = i - first;
         let top = this.template[first][i];
-        this.template[first][i] = this.template[i][last]; //top = right
+        this.template[first][i] = this.template[i][last]; // top = right
         this.template[i][last] = this.template[last][last - offset]; //right = bottom
         this.template[last][last - offset] =
-          this.template[last - offset][first]; //bottom = left: ;
-        this.template[last - offset][first] = top; //left = top ;
+          this.template[last - offset][first];
+        //bottom = left
+        this.template[last - offset][first] = top; // left = top
       }
     }
 
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
-        if (this.template[i][j] === 0) continue;
+        if (this.template[i][j] == 0) continue;
         let realX = i + this.getTruncedPosition().x;
         let realY = j + this.getTruncedPosition().y;
         if (
           realX < 0 ||
-          realX > squareCountX ||
-          realY > squareCountY ||
-          realY < 0
+          realX >= squareCountX ||
+          realY < 0 ||
+          realY >= squareCountY
         ) {
           this.template = tempTemplate;
           return false;
@@ -130,24 +116,20 @@ class Tetris {
   }
 }
 
-const imageSquareSize = 24; // 1개 사각형 사이즈
-const size = 40; // X or y축에서 1개의 사각형 + 여백(전체 크기)
+const imageSquareSize = 24;
+const size = 40;
 const framePerSecond = 24;
 const gameSpeed = 5;
 const canvas = document.getElementById("canvas");
 const nextShapeCanvas = document.getElementById("nextShapeCanvas");
 const scoreCanvas = document.getElementById("scoreCanvas");
-const Image = document.getElementById("image");
+const image = document.getElementById("image");
 const ctx = canvas.getContext("2d");
 const nctx = nextShapeCanvas.getContext("2d");
 const sctx = scoreCanvas.getContext("2d");
-const squareCountX = canvas.width / size; // X축 사각형 갯수
-const squareCountY = canvas.height / size; //Y축 사각형 갯수
+const squareCountX = canvas.width / size;
+const squareCountY = canvas.height / size;
 
-/**
- * 테트리스 shapes
- * @returns Tetris
- */
 const shapes = [
   new Tetris(0, 120, [
     [0, 1, 0],
@@ -198,7 +180,6 @@ let whiteLineThickness = 4;
 let gameLoop = () => {
   setInterval(update, 1000 / gameSpeed);
   setInterval(draw, 1000 / framePerSecond);
-  // setInterval(console.log('test'), 1000 / framePerSecond);
 };
 
 let deleteCompleteRows = () => {
@@ -206,24 +187,24 @@ let deleteCompleteRows = () => {
     let t = gameMap[i];
     let isComplete = true;
     for (let j = 0; j < t.length; j++) {
-      if (t[j].imageX === -1) isComplete = false;
+      if (t[j].imageX == -1) isComplete = false;
     }
     if (isComplete) {
       console.log("complete row");
+      score += 1000;
       for (let k = i; k > 0; k--) {
         gameMap[k] = gameMap[k - 1];
       }
+      let temp = [];
+      for (let j = 0; j < squareCountX; j++) {
+        temp.push({ imageX: -1, imageY: -1 });
+      }
+      gameMap[0] = temp;
     }
-    let temp = [];
-    for (let j = 0; j < squareCountX; j++) {
-      temp.push({ imageX: -1, imageY: -1 });
-    }
-    gameMap[0] = temp;
   }
 };
 
 let update = () => {
-  // console.log("업데이트 호출");
   if (gameOver) return;
   if (currentShape.checkBottom()) {
     currentShape.y += 1;
@@ -233,10 +214,7 @@ let update = () => {
         if (currentShape.template[k][l] == 0) continue;
         gameMap[currentShape.getTruncedPosition().y + l][
           currentShape.getTruncedPosition().x + k
-        ] = {
-          imageX: currentShape.imageX,
-          imageY: currentShape.imageY,
-        };
+        ] = { imageX: currentShape.imageX, imageY: currentShape.imageY };
       }
     }
 
@@ -250,19 +228,11 @@ let update = () => {
   }
 };
 
-/** 개별 사각형 그려주는 함수
- *  x, y : 좌표
- *  width, height: 크기
- *  color: 채우는 배경
- **/
 let drawRect = (x, y, width, height, color) => {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, width, height);
 };
 
-/**
- * 흰색 경계 테두리 그려주는 함수
- */
 let drawBackground = () => {
   drawRect(0, 0, canvas.width, canvas.height, "#bca0dc");
   for (let i = 0; i < squareCountX + 1; i++) {
@@ -286,21 +256,16 @@ let drawBackground = () => {
   }
 };
 
-/**
- * 현재 테트리스 그려주는 함수
- *
- */
 let drawCurrentTetris = () => {
   for (let i = 0; i < currentShape.template.length; i++) {
     for (let j = 0; j < currentShape.template.length; j++) {
       if (currentShape.template[i][j] == 0) continue;
-      /* currentShape은 각각 Tetris 객체를 나타냄 */
       ctx.drawImage(
-        image, //image:color block 7개 있는 png 파일을 의미
-        currentShape.imageX, // always 0
-        currentShape.imageY, // blue ~ pink까지 각 +24 씩 세로로 자름
-        imageSquareSize, // 크기, 가로 40
-        imageSquareSize, // 크기, 세로
+        image,
+        currentShape.imageX,
+        currentShape.imageY,
+        imageSquareSize,
+        imageSquareSize,
         Math.trunc(currentShape.x) * size + size * i,
         Math.trunc(currentShape.y) * size + size * j,
         size,
@@ -314,7 +279,7 @@ let drawSquares = () => {
   for (let i = 0; i < gameMap.length; i++) {
     let t = gameMap[i];
     for (let j = 0; j < t.length; j++) {
-      if (t[j].imageX === -1) continue;
+      if (t[j].imageX == -1) continue;
       ctx.drawImage(
         image,
         t[j].imageX,
@@ -330,9 +295,6 @@ let drawSquares = () => {
   }
 };
 
-/**
- * 다음 모양 그리는 함수
- */
 let drawNextShape = () => {
   nctx.fillStyle = "#bca0dc";
   nctx.fillRect(0, 0, nextShapeCanvas.width, nextShapeCanvas.height);
@@ -355,13 +317,19 @@ let drawNextShape = () => {
 };
 
 let drawScore = () => {
+  sctx.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
   sctx.font = "64px Poppins";
   sctx.fillStyle = "black";
   sctx.fillText(score, 10, 50);
 };
 
+let drawGameOver = () => {
+  ctx.font = "64px Poppins";
+  ctx.fillStyle = "black";
+  ctx.fillText("Game Over!", 10, canvas.height / 2);
+};
+
 let draw = () => {
-  // console.log("draw() 호출");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBackground();
   drawSquares();
@@ -372,14 +340,9 @@ let draw = () => {
     drawGameOver();
   }
 };
-/**
- * 테트리스 랜덤 모양 나오게 하는 함수
- * @returns Object {}
- */
+
 let getRandomShape = () => {
-  return Object.create(
-    shapes[Math.floor(Math.random() * shapes.length)]
-  );
+  return Object.create(shapes[Math.floor(Math.random() * shapes.length)]);
 };
 let resetVars = () => {
   initialTwoDArr = [];
@@ -393,17 +356,15 @@ let resetVars = () => {
   score = 0;
   gameOver = false;
   currentShape = getRandomShape();
-
   nextShape = getRandomShape();
-  // console.log(`다음 모양 ${JSON.stringify(nextShape)}`);
   gameMap = initialTwoDArr;
 };
 
 window.addEventListener("keydown", (event) => {
-  if (event.keyCode === 37) currentShape.moveLeft();
-  else if (event.keyCode === 38) currentShape.changeRotation();
-  else if (event.keyCode === 39) currentShape.moveRight();
-  else if (event.keyCode === 40) currentShape.moveBottom();
+  if (event.keyCode == 37) currentShape.moveLeft();
+  else if (event.keyCode == 38) currentShape.changeRotation();
+  else if (event.keyCode == 39) currentShape.moveRight();
+  else if (event.keyCode == 40) currentShape.moveBottom();
 });
 
 resetVars();
