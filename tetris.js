@@ -6,11 +6,14 @@
  */
 class Tetris {
   /**
-   * @param {number} imageX 컬러블락, 클리핑 할 png 파일의 x좌표
-   * @param {number} imageY 컬러블락, 클리핑 할 png 파일의 y좌표
+   * @param {number} imageX 컬러를 의미, 클리핑 할 png 파일의 x좌표
+   * @param {number} imageY 컬러를 의미, 클리핑 할 png 파일의 y좌표
    * @param {number[]} template 테트리스 블락 형태
    * x : 캔버스 중 x축 위치
    * y : 캔버스 중 y축 위치
+   *
+   * 유의점 : 헷갈리기 쉬운게 imageX는 컬러구성을 위한 컬러 블락(png파일) 에서
+   * 좌표점이고, 실제 gameMap에서 x,y 좌표는 this.x, this.y로 사용된다.
    */
   constructor(imageX, imageY, template) {
     this.imageY = imageY;
@@ -20,7 +23,13 @@ class Tetris {
     this.y = 0;
   }
 
-  checkBottom() {
+  /**
+   * checkBottom에서 canDown으로 이름 변경
+   * 블럭이 내려갈 수 있는지 체크해주는 함수
+   * 내려갈수 있으면 true, 없으면 false
+   * @return {boolean}
+   */
+  canDown() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
         if (this.template[i][j] === 0) continue;
@@ -30,6 +39,10 @@ class Tetris {
           return false;
         }
         if (gameMap[realY + 1][realX].imageX !== -1) {
+          /**
+           * 위 조건 의미는 즉 imageX === 0, 컬러가 있다는 의미
+           * 못 내려감
+           * */
           return false;
         }
       }
@@ -37,6 +50,7 @@ class Tetris {
     return true;
   }
 
+  /* 소수점  */
   getTruncedPosition() {
     return { x: Math.trunc(this.x), y: Math.trunc(this.y) };
   }
@@ -44,17 +58,19 @@ class Tetris {
   checkLeft() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
-        if (this.template[i][j] === 0) continue;
+        if (this.template[i][j] == 0) continue;
         let realX = i + this.getTruncedPosition().x;
         let realY = j + this.getTruncedPosition().y;
         if (realX - 1 < 0) {
           return false;
         }
-        if (gameMap[realY][realX - 1].imageX !== -1) return false;
+
+        if (gameMap[realY][realX - 1].imageX != -1) return false;
       }
     }
     return true;
   }
+
   checkRight() {
     for (let i = 0; i < this.template.length; i++) {
       for (let j = 0; j < this.template.length; j++) {
@@ -83,8 +99,59 @@ class Tetris {
   }
 
   moveBottom() {
-    if (this.checkBottom()) {
+    if (this.canDown()) {
       this.y += 1;
+      score += 1;
+    }
+  }
+  /**
+   * TODO:
+   * 스페이스를 눌렀을때,
+   * canDown 여부를 체크하고,
+   * 현재 y축 좌표를 알고,
+   * 해당블록의 y 높이를 더한 뒤,
+   * gameMap에서 다음 Y축 남은 블록중에,
+   * imageX 값이 -1이 아닌 블록까지의 count를 계산해주고 해당 블록 y축과 더해주면 된다.
+   */
+  pressSpace() {
+    if (this.canDown()) {
+      const fromTopToBottom =
+        this.getTruncedPosition().y + this.template.length;
+      let fromLeftToTemp = this.getTruncedPosition().x;
+      if (fromLeftToTemp === -1) fromLeftToTemp = 0;
+      if (fromLeftToTemp + this.template.length >= 11)
+        fromLeftToTemp = 6;
+
+      let countToDown = 0;
+      // console.log(`fromLeftToTemp : ${fromLeftToTemp}`);
+      // console.log(`this.template.length : ${this.template.length}`);
+      // console.log(`합 : ${fromLeftToTemp + this.template.length}`);
+
+      /* 해당 블록 y축+템플릿길이 부터 어디까지 바닥인지 체크 */
+      for (let i = fromTopToBottom; i < gameMap.length; i++) {
+        for (
+          let j = fromLeftToTemp;
+          j < fromLeftToTemp + this.template.length;
+          j++
+        ) {
+          if (gameMap[i][j].imageX !== -1) {
+            countToDown =
+              gameMap.length -
+              1 -
+              fromTopToBottom -
+              (gameMap.length - i);
+            break;
+          }
+        }
+        if (countToDown !== 0) break;
+      }
+
+      if (countToDown === 0) {
+        countToDown = gameMap.length - 1 - fromTopToBottom;
+      }
+      // console.log(`countToDown : ${countToDown}`);
+      this.y += countToDown;
+      score += countToDown;
     }
   }
   /**
@@ -118,8 +185,8 @@ class Tetris {
         let realY = j + this.getTruncedPosition().y;
         if (
           realX < 0 ||
-          realX > squareCountX ||
-          realY > squareCountY ||
+          realX >= squareCountX ||
+          realY >= squareCountY ||
           realY < 0
         ) {
           this.template = tempTemplate;
@@ -141,8 +208,14 @@ const Image = document.getElementById("image");
 const ctx = canvas.getContext("2d");
 const nctx = nextShapeCanvas.getContext("2d");
 const sctx = scoreCanvas.getContext("2d");
-const squareCountX = canvas.width / size; // X축 사각형 갯수
-const squareCountY = canvas.height / size; //Y축 사각형 갯수
+/**
+ * X축 사각형 갯수
+ **/
+const squareCountX = canvas.width / size;
+/**
+ * Y축 사각형 갯수
+ **/
+const squareCountY = canvas.height / size;
 
 /**
  * 테트리스 shapes
@@ -201,6 +274,9 @@ let gameLoop = () => {
   // setInterval(console.log('test'), 1000 / framePerSecond);
 };
 
+/**
+ * 한 줄 꽉 찼을때 삭제 해주는 함수
+ */
 let deleteCompleteRows = () => {
   for (let i = 0; i < gameMap.length; i++) {
     let t = gameMap[i];
@@ -209,7 +285,8 @@ let deleteCompleteRows = () => {
       if (t[j].imageX === -1) isComplete = false;
     }
     if (isComplete) {
-      console.log("complete row");
+      // console.log("complete row");
+      score += 1000;
       for (let k = i; k > 0; k--) {
         gameMap[k] = gameMap[k - 1];
       }
@@ -225,9 +302,20 @@ let deleteCompleteRows = () => {
 let update = () => {
   // console.log("업데이트 호출");
   if (gameOver) return;
-  if (currentShape.checkBottom()) {
+  if (currentShape.canDown()) {
     currentShape.y += 1;
   } else {
+    /** NOTE:
+     * tempate는 각 블록 당 2차원 배열 cube를 의미함
+     * length 관점에서 2x2, 3x3, 4x4 형태를 지님
+     * 우선 각 블록 template을 이중 for문으로 읽는데, 0은 무의미하므로
+     * continue, 유의미한 값 1이 있으면
+     * 픽셀 단위 개념으로, 해당 블록의 y, x 값 좌표를 읽고,
+     * for문 으로 인해 블록 템플릿 내부의 크기랑 더해주면서, 각 게임맵의 픽셀 단위당
+     * 해당 블록의 {imageX, imageY}을 할당해줘서 색을 입혀준다
+     * 예) {imageX : 0, imageY: 48}
+     *    (48이면 lightGreen 컬러이다. 그리고 imageX가 0이 아닌 의미는 컬러가 있다는 뜻이다.)
+     */
     for (let k = 0; k < currentShape.template.length; k++) {
       for (let l = 0; l < currentShape.template.length; l++) {
         if (currentShape.template[k][l] == 0) continue;
@@ -243,7 +331,7 @@ let update = () => {
     deleteCompleteRows();
     currentShape = nextShape;
     nextShape = getRandomShape();
-    if (!currentShape.checkBottom()) {
+    if (!currentShape.canDown()) {
       gameOver = true;
     }
     score += 100;
@@ -274,7 +362,6 @@ let drawBackground = () => {
       "white"
     );
   }
-
   for (let i = 0; i < squareCountY + 1; i++) {
     drawRect(
       0,
@@ -288,7 +375,6 @@ let drawBackground = () => {
 
 /**
  * 현재 테트리스 그려주는 함수
- *
  */
 let drawCurrentTetris = () => {
   for (let i = 0; i < currentShape.template.length; i++) {
@@ -311,6 +397,7 @@ let drawCurrentTetris = () => {
 };
 
 let drawSquares = () => {
+  // console.log(gameMap);
   for (let i = 0; i < gameMap.length; i++) {
     let t = gameMap[i];
     for (let j = 0; j < t.length; j++) {
@@ -355,9 +442,16 @@ let drawNextShape = () => {
 };
 
 let drawScore = () => {
+  sctx.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
   sctx.font = "64px Poppins";
   sctx.fillStyle = "black";
   sctx.fillText(score, 10, 50);
+};
+
+let drawGameOver = () => {
+  ctx.font = "64px Poppins";
+  ctx.fillStyle = "black";
+  ctx.fillText("Game Over!", 10, canvas.height / 2);
 };
 
 let draw = () => {
@@ -404,6 +498,7 @@ window.addEventListener("keydown", (event) => {
   else if (event.keyCode === 38) currentShape.changeRotation();
   else if (event.keyCode === 39) currentShape.moveRight();
   else if (event.keyCode === 40) currentShape.moveBottom();
+  else if (event.keyCode === 32) currentShape.pressSpace();
 });
 
 resetVars();
