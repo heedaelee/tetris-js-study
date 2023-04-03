@@ -267,8 +267,39 @@ let nextShape;
 let score;
 let initialTwoDArr;
 let whiteLineThickness = 4;
+let isPlaying = false;
+let audio;
+console.log("뮤직플레이 재생");
+const filePath = "../audio/tetrisOST.mp3";
+audio = new Audio(filePath);
+audio.load();
+// 볼륨 설정
+audio.volume = 1;
+audio.loop = true;
+// 실행
+console.log(audio);
+
+const toggleButton = document.getElementById("toggle-button");
+toggleButton.addEventListener("click", () => {
+  if (isPlaying) {
+    console.log("일시정지 클릭");
+    toggleButton.classList.remove("playing");
+    toggleButton.innerHTML =
+      '<svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%" class="stop"><path d="M 12,26 18.5,22 18.5,14 12,10 z M 18.5,22 25,18 25,18 18.5,14 z" id="ytp-id-169" fill="#ffffff"></path></svg>';
+    isPlaying = false;
+    audio.pause();
+  } else {
+    console.log("재생 클릭");
+    toggleButton.classList.add("playing");
+    toggleButton.innerHTML =
+      '<svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%" class="stop"><path fill="#ffffff" d="M 12,26 16,26 16,10 12,10 z M 21,26 25,26 25,10 21,10 z" id="ytp-id-192"></path></svg>';
+    isPlaying = true;
+    audio.play();
+  }
+});
 
 let gameLoop = () => {
+  console.log("반복");
   setInterval(update, 1000 / gameSpeed);
   setInterval(draw, 1000 / framePerSecond);
   // setInterval(console.log('test'), 1000 / framePerSecond);
